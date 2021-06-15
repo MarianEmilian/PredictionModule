@@ -152,19 +152,18 @@ def get_days(release_date):
     days = (today - date_format).days
     return days
 
-def classify(article):
+def classify(article, words):
     result = 0
-    for word in article['paragraphs']:
-        weight = article['paragraphs'][word]
+    for word in article:
+        weight = article[word]
         
-        if word in WORDS:
-            result = result + weight * WORDS[word]['positive']
-            result = result - weight * WORDS[word]['negative']
-    article['score'] = result
+        if word in words:
+            result = result + weight * words[word]['positive']
+            result = result - weight * words[word]['negative']
     if result > 0:
-        return 'positive'
+        return 'positive', result
     else:
-       return 'negative'
+       return 'negative', result
 
 
 def accurracy(results1, results):

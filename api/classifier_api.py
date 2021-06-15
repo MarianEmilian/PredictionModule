@@ -7,7 +7,8 @@ import pickle
 from nltk.tokenize import word_tokenize
 
 sys.path.append('D:\Licenta\PredIndex')
-from PredictionModule.utils import get_mood, pos_neg_words, norm_clicks, process_articles
+from PredictionModule.utils import get_mood, pos_neg_words, norm_clicks, process_articles, classify, process_sentence
+
 
 
 WORDS = pickle.load(open("words.pickle", 'rb'))
@@ -20,12 +21,22 @@ vectorizer = pickle.load(open('../models/vectorizer.sav', 'rb'))
 @app.route('/sentiment', methods=['GET', 'POST'])
 def sentiment_analysis():
     if request.method == 'GET':
-        text = request.args.get('text')
-        if text:
-            text_vector = vectorizer.transform([text])
+        article = request.args.get('article')
+        if article:
+            article = article.split(', ')
+            proc_paragraphs = ''
+            for para in article:
+                pp = process_sentence(sentence=para)
+                proc_paragraphs = proc_paragraphs + ' ' + pp
+            article = proc_paragraphs
 
-            result = classifier.predict(text_vector)
-            return make_response(jsonify({'sentiment': result[0], 'text': text, 'status_code':200}), 200)
+            article_vector = vectorizer.transform([article])
+            index_value = {i[1]:i[0] for i in  vectorizer.vocabulary_.items()}
+
+            word_vector = {index_value[index]:value for (index,value) in zip(article_vector.indices, article_vector.data)}
+            sentiment, score = classify(word_vector, WORDS)
+    
+            return make_response(jsonify({'sentiment': sentiment, 'score': score, 'status_code' : 200}), 200)
         return make_response(jsonify({'error':'sorry! unable to parse', 'status_code':500}), 500)
 
 
@@ -36,8 +47,6 @@ def mood_analysis():
         if articles:
             for article in articles:
                 article['paragraphs'] = article['paragraphs'].split(', ')
-
-                print(type(articles[0]['paragraphs']).__name__)
             
             process_articles(articles)
             norm_clicks(articles)
