@@ -7,13 +7,10 @@ import spacy
 import en_core_web_sm
 import json
 from sklearn.feature_extraction.text import TfidfVectorizer
-import glob
 from math import e
 from datetime import date
-from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
 
 lematizer = WordNetLemmatizer()
 
@@ -23,18 +20,13 @@ vectorizer = TfidfVectorizer(min_df= 3, max_df=0.3, stop_words= stopwords.words(
 
 import pickle
 
-def get_articles(source):
-    with open(source, 'r') as news:
-        my_dict = json.load(news)
-        return my_dict
+
 
 def tf_idf(articles):
     content  = []
     
     for article in articles:
         content.append(article['paragraphs'])
-    
-    
 
     content = vectorizer.fit_transform(content)
 
@@ -197,13 +189,4 @@ def accurracy(results1, results):
     return (pos_corr + neg_corr ) * 100 / (total_neg + total_pos)
 
 
-def vader_classifier(dict):
-    cls = []
-    for article in dict:
-        content = ''
-        for paragraph in article['paragraphs']:
-            content = content + paragraph
-        pol_score = SIA().polarity_scores(content)
-        pol_score['headline'] = process_sentence(article['headline'])
-        cls.append(pol_score)
-    return cls
+
